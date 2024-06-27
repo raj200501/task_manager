@@ -1,0 +1,41 @@
+#!/usr/bin/env ruby
+
+require_relative '../lib/task_manager/task_manager'
+
+def print_help
+  puts "Task Manager Commands:"
+  puts "  add <title> <description>   - Add a new task"
+  puts "  list                        - List all tasks"
+  puts "  update <id> <options>       - Update a task"
+  puts "  delete <id>                 - Delete a task"
+  puts "  help                        - Show this help message"
+end
+
+task_manager = TaskManager.new
+
+command = ARGV.shift
+
+case command
+when 'add'
+  title = ARGV.shift
+  description = ARGV.shift
+  task_manager.add_task(title, description)
+  puts "Task added: #{title}"
+when 'list'
+  task_manager.list_tasks
+when 'update'
+  id = ARGV.shift.to_i
+  options = {}
+  ARGV.each do |arg|
+    key, value = arg.split('=')
+    options[key.to_sym] = value
+  end
+  task_manager.update_task(id, **options)
+  puts "Task #{id} updated"
+when 'delete'
+  id = ARGV.shift.to_i
+  task_manager.delete_task(id)
+  puts "Task #{id} deleted"
+else
+  print_help
+end
