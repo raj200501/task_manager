@@ -1,18 +1,21 @@
-require 'rake'
-require 'active_record'
-require 'yaml'
+# frozen_string_literal: true
 
-namespace :db do
-  desc "Migrate the database"
-  task :migrate do
-    ActiveRecord::Base.establish_connection(YAML.load_file('config/database.yml'))
-    ActiveRecord::Migrator.migrations_paths = ['db/migrate']
-    ActiveRecord::Migrator.migrate(ActiveRecord::Migrator.migrations_paths)
-  end
+require 'rake/testtask'
 
-  desc "Create the database"
-  task :create do
-    ActiveRecord::Base.establish_connection(YAML.load_file('config/database.yml'))
-    ActiveRecord::Base.connection.create_database('db/tasks.db')
+Rake::TestTask.new(:test) do |t|
+  t.libs << 'test'
+  t.pattern = 'test/**/*_test.rb'
+  t.warning = false
+end
+
+task default: :test
+
+namespace :storage do
+  desc 'Remove the development data file'
+  task :reset do
+    require_relative 'lib/task_manager/configuration'
+    config = TaskManager::Configuration.load
+    path = config.storage_path
+    File.delete(path) if File.exist?(path)
   end
 end
