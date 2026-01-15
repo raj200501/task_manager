@@ -1,25 +1,57 @@
-require 'active_record'
+# frozen_string_literal: true
+
+require_relative 'configuration'
+require_relative 'exporter'
+require_relative 'importer'
+require_relative 'report'
+require_relative 'repository'
+require_relative 'storage'
 require_relative 'task'
 
-class TaskManager
-  def initialize
-    ActiveRecord::Base.establish_connection(YAML.load_file('config/database.yml'))
-  end
+module TaskManager
+  class TaskManager
+    def initialize(config: Configuration.load)
+      @config = config
+      @storage = Storage.new(path: config.storage_path)
+      @repository = Repository.new(storage: @storage)
+    end
 
-  def add_task(title, description)
-    Task.create(title: title, description: description)
-  end
+    def add_task(title, description)
+      repository.create(title: title, description: description)
+    end
 
-  def list_tasks
-    Task.all.each { |task| puts task }
-  end
+    def list_tasks(filter: :all)
+      repository.list(filter: filter)
+    end
 
-  def update_task(id, title: nil, description: nil, completed: nil)
-    task = Task.find(id)
-    task.update(title: title, description: description, completed: completed)
-  end
+    def update_task(id, title: nil, description: nil, completed: nil)
+      repository.update(id, title: title, description: description, completed: completed)
+    end
 
-  def delete_task(id)
-    Task.find(id).destroy
+    def delete_task(id)
+      repository.delete(id)
+    end
+
+    def stats
+      repository.stats
+    end
+
+    def export_tasks(format:, path:)
+      tasks = repository.list(filter: :all)
+      Exporter.new.export(tasks: tasks, format: format, path: path)
+      tasks.count
+    end
+
+    def import_tasks(path:, format: nil)
+      Importer.new.import(path: path, repository: repository, format: format)
+    end
+
+    def report
+      Report.new(tasks: repository.list(filter: :all)).generate
+    end
+
+    def repository
+      @repository
+    end
   end
 end

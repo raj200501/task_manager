@@ -1,0 +1,8 @@
+default: &default
+  storage_path: <%= ENV.fetch('TASK_MANAGER_DATA_PATH', "data/tasks_#{ENV.fetch('TASK_MANAGER_ENV', 'development')}.json") %>
+
+development:
+  <<: *default
+
+test:
+  storage_path: <%= ENV.fetch('TASK_MANAGER_TEST_DATA_PATH', 'tmp/tasks_test.json') %>
